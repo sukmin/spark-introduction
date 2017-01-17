@@ -88,7 +88,7 @@ public class Driver {
 		Tuple2<String, Long> maxTuple = reduceRdd.max(new MyComparator());
 		System.out.println("max word : [" + maxTuple._1() + "] , count : " + maxTuple._2());
 
-		// 정렬된 워드 카운트 출력
+		// 워드 카운트 정렬
 		JavaPairRDD<Long, String> countAndWord = reduceRdd.mapToPair(new PairFunction<Tuple2<String, Long>, Long, String>() {
 			@Override
 			public Tuple2<Long, String> call(Tuple2<String, Long> wordAndCount) throws Exception {
