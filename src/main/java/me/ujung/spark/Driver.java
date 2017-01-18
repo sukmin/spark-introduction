@@ -2,6 +2,7 @@ package me.ujung.spark;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -11,7 +12,6 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
-import org.apache.spark.api.java.function.VoidFunction;
 
 import scala.Tuple2;
 
@@ -77,19 +77,15 @@ public class Driver {
 		});
 
 		// 워드 카운트 출력
-		reduceRdd.foreach(new VoidFunction<Tuple2<String, Long>>() {
-			@Override
-			public void call(Tuple2<String, Long> wordAndCount) throws Exception {
-				System.out.println("word : [" + wordAndCount._1() + "] , count : " + wordAndCount._2());
-			}
-		});
+		List<Tuple2<String, Long>> wordAndCountList = reduceRdd.collect();
+		wordAndCountList.forEach(wordAndCount -> System.out.println("word : [" + wordAndCount._1() + "] , count : " + wordAndCount._2()));
 
 		// 가장 많이 나온 단어를 찾음
 		Tuple2<String, Long> maxTuple = reduceRdd.max(new MyComparator());
 		System.out.println("max word : [" + maxTuple._1() + "] , count : " + maxTuple._2());
 
 		// 워드 카운트 정렬
-		JavaPairRDD<Long, String> countAndWord = reduceRdd.mapToPair(new PairFunction<Tuple2<String, Long>, Long, String>() {
+		JavaPairRDD<Long, String> countAndWordRdd = reduceRdd.mapToPair(new PairFunction<Tuple2<String, Long>, Long, String>() {
 			@Override
 			public Tuple2<Long, String> call(Tuple2<String, Long> wordAndCount) throws Exception {
 				return new Tuple2<>(wordAndCount._2(), wordAndCount._1());
@@ -97,12 +93,8 @@ public class Driver {
 		}).sortByKey(false);
 
 		// 정렬된 워드 카운트 출력
-		countAndWord.foreach(new VoidFunction<Tuple2<Long, String>>() {
-			@Override
-			public void call(Tuple2<Long, String> wordAndCount) throws Exception {
-				System.out.println("word : [" + wordAndCount._2() + "] , count : " + wordAndCount._1());
-			}
-		});
+		List<Tuple2<Long, String>> countAndWordList = countAndWordRdd.collect();
+		countAndWordList.forEach(countAndWord -> System.out.println("word : [" + countAndWord._2() + "] , count : " + countAndWord._1()));
 
 	}
 
