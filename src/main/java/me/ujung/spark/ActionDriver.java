@@ -58,15 +58,6 @@ public class ActionDriver {
 		});
 		System.out.println(foldName);
 
-		// aggregate()
-
-		// collect() : 단일 머신 메모리에 모두 올릴 수 있는 크기여야 한다.
-
-		// take
-
-		// top
-
-
 		spark.stop();
 
 	}

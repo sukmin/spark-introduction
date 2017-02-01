@@ -10,12 +10,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.DoubleFunction;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
-import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.SparkSession;
-
-import scala.Tuple22;
 
 /**
  * @author sukmin.kwon
@@ -23,7 +19,7 @@ import scala.Tuple22;
  */
 public class TransformationDriver {
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws InterruptedException {
 
 		SparkSession spark = SparkSession.builder()
 			.master("local")
@@ -67,7 +63,6 @@ public class TransformationDriver {
 		// catesian() : 매우 고비용
 		//JavaRDD<Name> cateRdd = americanRdd.cartesian()?
 		//RddUtils.collectAndPrint("cateRdd",cateRdd);
-
 
 		List<Integer> myInteger = Arrays.asList(1, 2, 2, 3, 3);
 		JavaRDD<Integer> myIntegerRdd = sc.parallelize(myInteger);
@@ -134,9 +129,9 @@ public class TransformationDriver {
 		}, true); // 이건 없었는데?
 		RddUtils.collectAndPrint("mapPartitionsWithIndexNamesRdd01", mapPartitionsWithIndexNamesRdd01);
 
+		// coalesce() 셔플을 발생시키지 않는 상태로 파티션 갯수를 줄이는 방향으로 조정
 
-
-
+		Thread.sleep(100000000);
 
 		spark.stop();
 

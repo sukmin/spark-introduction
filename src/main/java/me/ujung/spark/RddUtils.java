@@ -1,5 +1,6 @@
 package me.ujung.spark;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 
 /**
@@ -13,6 +14,10 @@ public class RddUtils {
 	}
 
 	public static void collectAndPrint(String name, JavaRDD<?> rdd) {
+		System.out.println(name + " : " + rdd.collect().toString());
+	}
+
+	public static void collectAndPrint(String name, JavaPairRDD<?,?> rdd) {
 		System.out.println(name + " : " + rdd.collect().toString());
 	}
 
