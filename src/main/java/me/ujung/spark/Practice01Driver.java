@@ -12,6 +12,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.storage.StorageLevel;
 
 import scala.Tuple2;
 
@@ -67,6 +68,9 @@ public class Practice01Driver {
 			}
 		});
 
+		// 캐쉬
+		//countRdd.persist(StorageLevel.MEMORY_ONLY());
+
 		// 단어마다 '하나'라고 표기한 것들을 키를 기준으로 한 리듀스를 통하여 합침
 		JavaPairRDD<String, Long> reduceRdd = countRdd.reduceByKey(new Function2<Long, Long, Long>() {
 			@Override
@@ -95,7 +99,7 @@ public class Practice01Driver {
 		List<Tuple2<Long, String>> countAndWordList = countAndWordRdd.collect();
 		countAndWordList.forEach(countAndWord -> System.out.println("word : [" + countAndWord._2() + "] , count : " + countAndWord._1()));
 
-		Thread.sleep(1000000);
+		Thread.sleep(1000000000);
 
 	}
 }
