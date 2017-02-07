@@ -61,7 +61,7 @@ public class TransformationDriver {
 		RddUtils.collectAndPrint("pureAmericanRdd", pureAmericanRdd);
 
 		// catesian() : 매우 고비용
-		//JavaRDD<Name> cateRdd = americanRdd.cartesian()?
+		americanRdd.cartesian(pureAmericanRdd);
 		//RddUtils.collectAndPrint("cateRdd",cateRdd);
 
 		List<Integer> myInteger = Arrays.asList(1, 2, 2, 3, 3);
@@ -95,12 +95,12 @@ public class TransformationDriver {
 				return name.getSource().length();
 			}
 		});
-		//doubleRdd.
 
 		// mapPartitions : 파티션별로 단 한번만 실행하고 싶은 경우
 		JavaRDD<Name> mapPartitionsNamesRdd01 = myNamesRdd.mapPartitions(new FlatMapFunction<Iterator<Name>, Name>() {
 			@Override
 			public Iterator<Name> call(Iterator<Name> nameIterator) throws Exception {
+
 				List<Name> afterNames = new ArrayList<>();
 				while (nameIterator.hasNext()) {
 					Name name = nameIterator.next();
