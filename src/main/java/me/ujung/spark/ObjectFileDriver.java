@@ -37,9 +37,10 @@ public class ObjectFileDriver {
 		RddUtils.collectAndPrint("rankRdd", rankRdd);
 
 		String outputPath = "/Users/naver/git/spark-introduction/sample/objectfile/output" + LocalDateTime.now();
-		rankRdd.saveAsObjectFile(outputPath);
+		rankRdd.saveAsObjectFile(outputPath); // 웬만하면 이렇게 하지 맙시다.
 		System.out.println(outputPath);
 
+		// 오브젝트 변경
 		//String readObjectPath = "/Users/naver/git/spark-introduction/sample/objectfile/output2017-02-08T07:37:48.428";
 		//JavaRDD<Rank> objectRdd = sc.objectFile(readObjectPath);
 		//RddUtils.collectAndPrint("objectRdd", objectRdd);

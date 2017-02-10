@@ -31,6 +31,7 @@ public class JsonFileDriver {
 
 		JavaRDD<String> textRdd = sc.textFile("/Users/naver/git/spark-introduction/sample/jsonfile/rank.json");
 
+		// 이렇게 실행. gson 생성 자원을 아끼려면 저번시간에 배운 mapPartions 메소드 사용
 		JavaRDD<String> titleRdd = textRdd.map(new Function<String, String>() {
 			@Override
 			public String call(String textLine) throws Exception {
@@ -41,6 +42,7 @@ public class JsonFileDriver {
 		});
 		RddUtils.collectAndPrint("titleRdd", titleRdd);
 
+		// 커스텀객체로 받으려면 직렬화 되어야..
 		JavaRDD<Rank> rankRdd = textRdd.map(new Function<String, Rank>() {
 			@Override
 			public Rank call(String textLine) throws Exception {
@@ -51,7 +53,7 @@ public class JsonFileDriver {
 		});
 		RddUtils.collectAndPrint("rankRdd", rankRdd);
 
-		// 이제 람다식 좀 써볼까?
+		// 이제 람다식 좀 써볼까? LocalDateTime은 Date사용이 불편해서 자바8에 추가된 클래스
 		String outputPath = "/Users/naver/git/spark-introduction/sample/jsonfile/output" + LocalDateTime.now();
 		rankRdd.map(rank -> {
 			Gson gson = new Gson();
@@ -60,6 +62,7 @@ public class JsonFileDriver {
 
 		JavaRDD<String> errorRdd = sc.textFile("/Users/naver/git/spark-introduction/sample/jsonfile/error.json");
 
+		// 공유메모리. 액션에서만 사용해야 정확도 보장됨. 트랜스포메이션에서 사용시 보장되진 않음.
 		final LongAccumulator longAccumulator = sc.sc().longAccumulator();
 		JavaRDD<String> errorTitleRdd = errorRdd.map(new Function<String, String>() {
 			@Override
