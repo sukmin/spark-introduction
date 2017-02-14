@@ -1,0 +1,230 @@
+#root로 로그인
+/etc/hosts 에 해당 장비 호스트 입력
+내용
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+10.58.54.128 gp001
+10.58.54.127 gp002
+10.58.54.249 gp003
+
+클러스터로 설치할 경우 여러 머신 모두 등록
+gp001이 마스터
+gp002가 슬레이브
+gp003도 슬레이브
+
+#dog로 로그인
+마스터 서버가 다른 노드를 제어해야 하므로 마스터의 공개키를 슬레이브 장비에 알려주어야 한다.
+ssh-keygen -t rsa
+(모두 엔터만 누름)
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/dog/.ssh/id_rsa):
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /home/dog/.ssh/id_rsa.
+Your public key has been saved in /home/dog/.ssh/id_rsa.pub.
+The key fingerprint is:
+1c:6b:83:ea:ed:25:c4:7d:9e:9c:ad:03:d4:59:2f:72 dog@gp001
+The key's randomart image is:
++--[ RSA 2048]----+
+|                 |
+|            .    |
+|        .. o .   |
+|     . +.o+ E .  |
+|      +.S .o .   |
+|     o ..= +     |
+|    . . ..= .    |
+|   . . o  ..     |
+|    ..o   ..     |
++-----------------+
+
+cd .ssh
+cat id_rsa.pub > authorized_keys
+(마스터 자기 자신도 등록)
+(슬레이브에서는 ~/.ssh 아래에 vi authorized_keys 로 파일 만들고 마스터 공개키 복사)
+
+authorized_keys의 권한은 600여야 한다.
+chmod 600 authorized_keys
+
+.ssh디렉토리의 권한은 700이여야 한다.
+확인만 해주자.
+
+접속테스트
+ssh gp002
+
+cd
+cd install
+wget http://apache.mirror.cdnetworks.com/hadoop/common/stable/hadoop-2.7.3.tar.gz
+(다운로드)
+tar xvfz hadoop-2.7.3.tar.gz
+mv hadoop-2.7.3 /home/dog/apps
+cd /home/dog/apps
+ln -s /home/dog/apps/hadoop-2.7.3 hadoop
+
+#root 로그인
+cd /home/dog/install
+(시작하세요 하둡프로그램 책에는 프로토버프 설치하라고 기술되어 있음)
+wget https://github.com/google/protobuf/releases/download/v2.5.0/protobuf-2.5.0.tar.gz
+tar xvfz protobuf-2.5.0.tar.gz
+cd protobuf-2.5.0
+./configure --prefix=/home/dog/apps/protobuf/
+make && make install
+cd /home/dog/apps/
+chown -R dog.dog protobuf
+
+#dog로그인
+.bash_profile 또는 .bashrc에 아래 입력
+
+export APP_HOME=/home/dog
+export JAVA_HOME=${APP_HOME}/apps/jdk
+export MAVEN_HOME=${APP_HOME}/apps/maven
+export PROTOBUF_HOME=${APP_HOME}/apps/protobuf
+export HADOOP_HOME=${APP_HOME}/apps/hadoop
+export YARN_CONF_DIR=${HADOOP_HOME}/etc/hadoop
+export SPARK_HOME=${APP_HOME}/apps/spark
+export HADOOP_PID_DIR=${HADOOP_HOME}/pid
+
+export PATH=$PATH:$HOME/bin
+export PATH=$PATH:${JAVA_HOME}/bin
+export PATH=$PATH:${MAVEN_HOME}/bin
+export PATH=$PATH:${PROTOBUF_HOME}/bin
+export PATH=$PATH:${HADOOP_HOME}/bin
+export PATH=$PATH:${SPARK_HOME}/bin
+
+
+
+#dog로그인
+mkdir data && cd data && mkdir dfs && cd dfs && mkdir datanode && mkdir namenode && mkdir namesecondary
+
+
+cd /home/dog/apps/hadoop
+mkdir pid
+cd /home/dog/apps/hadoop/etc/hadoop
+
+.bash_profile 또는 .bashrc에 패스 추가
+
+
+# hadoop-env.sh 수정
+JAVA_HOME 경로만 하드하게 바꿔주자.
+(가끔 자바홈을 찾지 못함)
+
+#master 파일 생성
+vi master
+
+gp001
+
+#slaves 파일 수정
+vi slaves
+
+gp002
+gp003
+
+#core-site.xml 수정
+<configuration>
+        <property>
+                <name>fs.defaultFS</name>
+                <value>hdfs://gp001:9010</value>
+        </property>
+        <property>
+                <name>hadoop.tmp.dir</name>
+                <value>/home/dog/data/hadoop/tmp</value>
+        </property>
+</configuration>
+
+#hdfs-site.xml 수정
+<configuration>
+	<property>
+		<name>dfs.replication</name>
+		<value>1</value>
+	</property>
+	<property>
+		<name>dfs.namenode.name.dir</name>
+		<value>/home/dog/data/dfs/namenode</value>
+	</property>
+	<property>
+		<name>dfs.namenode.checkpoint.dir</name>
+		<value>/home/dog/data/dfs/namesecondary</value>
+	</property>
+	<property>
+		<name>dfs.datanode.data.dir</name>
+		<value>/home/dog/data/dfs/datanode</value>
+	</property>
+	<property>
+		<name>dfs.http.address</name>
+		<value>gp001:50070</value>
+	</property>
+	<property>
+		<name>dfs.secondary.http.address</name>
+		<value>gp002:50090</value>
+	</property>
+</configuration>
+
+#mapred-site 생성
+cp mapred-site.xml.template mapred-site.xml
+
+vi mapred-site.xml
+
+<configuration>
+	<property>
+		<name>mapreduce.framework.name</name>
+		<value>yarn</value>
+	</property>
+</configuration>
+
+# yarn-env.sh 수정
+별도 수정 필요없음
+
+# yarn-site.xml 수정
+(참고 : http://m.blog.naver.com/superbag2010/220791657218 )
+(참고 : http://blrunner.com/103 )
+
+vi yarn-site.xml
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+        <property>
+                <name>yarn.nodemanager.aux-services</name>
+                <value>mapreduce_shuffle</value>
+        </property>
+        <property>
+                <name>yarn.nodemanager.aux-services.mapreduce_shuffle.class</name>
+                <value>org.apache.hadoop.mapred.ShuffleHandler</value>
+        </property>
+        <property>
+                <name>yarn.resourcemanager.hostname</name>
+                <value>gp001</value>
+        </property>
+        <property>
+                <name>yarn.resourcemanager.webapp.address</name>
+                <value>gp001:8088</value>
+        </property>
+
+</configuration>
+
+#마스터에서 슬레이브로 설정복사
+scp -rp ./hadoop-2.7.3 gp002:/home/dog/apps/hadoop-2.7.3
+scp -rp ./hadoop-2.7.3 gp003:/home/dog/apps/hadoop-2.7.3
+
+#dog로그인
+하둡기동
+마스터장비에서 아래 명령 실행
+포맷시
+/home/dog/apps/hadoop/bin/hdfs namenode -format
+
+기동시
+/home/dog/apps/hadoop/sbin/start-all.sh
+
+종료시
+/home/dog/apps/hadoop/sbin/stop-all.sh
+
+
+#개인PC호스트
+#하둡호스트
+1.255.56.88 gp001
+125.209.193.180 gp002
+125.209.193.177 gp003
+
+#root로그인( http://blrunner.com/46 )
+iptables -R INPUT 3 -p tcp -m multiport --dports 22,80,443,4040,8080,8088,9010,50070,50075,50090 -j ACCEPT
+service iptables save
+service iptables restart

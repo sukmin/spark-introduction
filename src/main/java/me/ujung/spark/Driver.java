@@ -2,9 +2,7 @@ package me.ujung.spark;
 
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -12,6 +10,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.sql.SparkSession;
 
 import scala.Tuple2;
 
@@ -23,14 +22,24 @@ public class Driver {
 
 	public static void main(String[] args) {
 
-		String appName = "wordCount";
-		SparkConf conf = new SparkConf().setMaster("local").setAppName(appName);
-		JavaSparkContext sc = new JavaSparkContext(conf);
+		if (args.length != 2) {
+			System.out.println("args need input file, output file");
+			return;
+		}
 
-		String samplePath = "/Users/naver/git/spark-introduction/sample2.txt";
+		String inputPath = args[0];
+		System.out.println("input file : " + inputPath);
+		String outputPath = args[1];
+		System.out.println("output file : " + outputPath);
+
+		SparkSession spark = SparkSession.builder()
+			.appName("WordCount")
+			.getOrCreate();
+
+		JavaSparkContext sc = new JavaSparkContext(spark.sparkContext());
 
 		// 파일에서 RDD를 만듬
-		JavaRDD<String> sampleTextRdd = sc.textFile(samplePath);
+		JavaRDD<String> sampleTextRdd = sc.textFile(inputPath);
 
 		// 한줄로 존재하던 텍스트를 단어로 분리
 		JavaRDD<String> wordRdd = sampleTextRdd.flatMap(new FlatMapFunction<String, String>() {
@@ -76,14 +85,6 @@ public class Driver {
 			}
 		});
 
-		// 워드 카운트 출력
-		List<Tuple2<String, Long>> wordAndCountList = reduceRdd.collect();
-		wordAndCountList.forEach(wordAndCount -> System.out.println("word : [" + wordAndCount._1() + "] , count : " + wordAndCount._2()));
-
-		// 가장 많이 나온 단어를 찾음
-		Tuple2<String, Long> maxTuple = reduceRdd.max(new MyComparator());
-		System.out.println("max word : [" + maxTuple._1() + "] , count : " + maxTuple._2());
-
 		// 워드 카운트 정렬
 		JavaPairRDD<Long, String> countAndWordRdd = reduceRdd.mapToPair(new PairFunction<Tuple2<String, Long>, Long, String>() {
 			@Override
@@ -93,9 +94,9 @@ public class Driver {
 		}).sortByKey(false);
 
 		// 정렬된 워드 카운트 출력
-		List<Tuple2<Long, String>> countAndWordList = countAndWordRdd.collect();
-		countAndWordList.forEach(countAndWord -> System.out.println("word : [" + countAndWord._2() + "] , count : " + countAndWord._1()));
+		countAndWordRdd.saveAsTextFile(outputPath);
 
+		spark.stop();
 	}
 
 }

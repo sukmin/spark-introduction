@@ -1,0 +1,60 @@
+#dog로 로그인
+
+cd install
+wget http://d3kbcqa49mib13.cloudfront.net/spark-2.1.0-bin-hadoop2.7.tgz
+tar -xzvf spark-2.1.0-bin-hadoop2.7.tgz
+mv spark-2.1.0-bin-hadoop2.7 /home/dog/apps/spark-2.1.0-bin-hadoop2.7
+cd /home/dog/apps
+ln -s /home/dog/apps/spark-2.1.0-bin-hadoop2.7 spark
+
+
+얀설정
+cd /home/dog/apps/spark/conf
+cp spark-env.sh.template spark-env.sh
+vi spark-env.sh
+
+최하단에 추가
+YARN_CONF_DIR=/home/dog/apps/hadoop/etc/hadoop
+
+HDFS디렉토리생성
+hdfs dfs -mkdir /etl
+hdfs dfs -mkdir /user/dog
+hdfs dfs -mkdir /tmp
+hdfs dfs -mkdir /data
+hdfs dfs -mkdir /app
+hdfs dfs -mkdir /metadata
+
+파일을 HDFS에 넣기
+(http://blog.acronym.co.kr/370)
+cd ./sample
+hdfs dfs -copyFromLocal sample1.txt /data/sample1
+hdfs dfs -copyFromLocal sample2.txt /data/sample2
+
+wget 'http://norvig.com/big.txt'
+touch sample3.txt
+cat big.txt >> sample3.txt
+cat big.txt >> sample3.txt
+rm big.txt
+
+hdfs dfs -copyFromLocal sample3.txt /data/sample3
+
+아웃풋 디렉토리 설계
+hdfs dfs -mkdir /output
+
+스파크 실행
+spark-submit --class me.ujung.spark.Driver --master yarn --deploy-mode client ./SparkIntro-1.0.jar hdfs://1.255.56.88:9010/data/sample1 hdfs://1.255.56.88:9010/output/output-sukmin-0214202733
+
+실행안되는 문제 발생
+http://stackoverflow.com/questions/21005643/container-is-running-beyond-memory-limits
+
+vi yarn-site.xml
+
+<property>
+<name>yarn.nodemanager.vmem-check-enabled</name>
+<value>false</value>
+</property>
+
+아웃풋 디렉토리 삭제
+hdfs dfs -rmr /output/output-sukmin-0214202733
+
+
