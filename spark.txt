@@ -38,6 +38,18 @@ rm big.txt
 
 hdfs dfs -copyFromLocal sample3.txt /data/sample3
 
+하둡 대용량파일 넣을때 타임아웃이 난다면.
+
+vi hdfs-site.xml
+        <property>
+                <name>dfs.datanode.socket.write.timeout</name>
+                <value>30000000</value>
+        </property>
+        <property>
+                <name>dfs.socket.timeout</name>
+                <value>30000000</value>
+        </property>
+
 아웃풋 디렉토리 설계
 hdfs dfs -mkdir /output
 
@@ -58,3 +70,75 @@ vi yarn-site.xml
 hdfs dfs -rmr /output/output-sukmin-0214202733
 
 
+클러스터 디플로이 모드
+spark-submit --class me.ujung.spark.Driver --master yarn --deploy-mode cluster ./SparkIntro-1.0.jar hdfs://1.255.56.88:9010/data/sample1 hdfs://1.255.56.88:9010/output/output-sukmin-0214202733
+
+혹시 얀이 ACCEPTED상태가 반복된다면
+
+vi /home/dog/apps/hadoop/etc/hadoop/capacity-scheduler.xml
+
+yarn.scheduler.capacity.maximum-am-resource-percent 비율을 조정 0.1 -> 0.5
+
+
+그래도 얀이 ACCEPTD상태가 반복되면?
+노드매니져가 있는 노드에서 할당할 자원이 없어서 대기중..
+최소자원를 낮추자
+
+vi yarn-site.xml
+
+        <property>
+                <name>yarn.scheduler.minimum-allocation-mb</name>
+                <value>256</value>
+        </property>
+        <property>
+                <name>yarn.scheduler.increment-allocation-mb</name>
+                <value>256</value>
+        </property>
+
+
+이벤트로그를 쌓고 보고 싶다면
+vi spark-defaults.conf
+spark.eventLog.dir               hdfs://gp001:9010/spark/eventLog
+spark.history.fs.logDirectory    hdfs://gp001:9010/spark/eventLog
+
+sbin/start-history-sever.sh
+
+gp001:18080
+
+
+프로그램 실행 로그를 보고 싶다면
+
+yarn-site에 설정
+
+mkdir /home/dog/logs/yarn
+
+vi yarn-site.xml
+
+        <property>
+                <name>yarn.log-aggregation-enable</name>
+                <value>true</value>
+        </property>
+        <property>
+                <name>yarn.nodemanager.log-dir</name>
+                <value>/home/dog/logs/yarn</value>
+        </property>
+        <property>
+                <name>yarn.nodemanager.remote-app-log-dir</name>
+                <value>hdfs://gp001:9010/yarn/logs</value>
+        </property>
+        <property>
+                <name>yarn.log-aggregation.retain-seconds</name>
+                <value>86400</value>
+        </property>
+        <property>
+                <name>yarn.log.server.url</name>
+                <value>?????</value>
+        </property>
+        <property>
+                <name>yarn.nodemanager.log.retain-seconds</name>
+                <value>1000000</value>
+        </property>
+
+뭔가 해보려고 했는데 아직 잘 안됨
+그래서...
+yarn logs -applicationId 번호
