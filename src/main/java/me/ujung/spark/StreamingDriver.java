@@ -5,11 +5,13 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFunction;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
@@ -103,8 +105,8 @@ public class StreamingDriver {
 		});
 		userTotalScoreDStream.print();
 
-		// 1분동안 사람들의 이름당 나온 수. 30초마다 수행
-		testDStream.mapToPair(new PairFunction<TestModel, String, Integer>() {
+		// 1분동안 사람들의 이름당 나온 수. 5초마다 수행
+		JavaPairDStream<String, Integer> peopleCountDStgream = testDStream.mapToPair(new PairFunction<TestModel, String, Integer>() {
 			@Override
 			public Tuple2<String, Integer> call(TestModel testModel) throws Exception {
 				return new Tuple2<>(testModel.getName(), 1);
@@ -114,8 +116,32 @@ public class StreamingDriver {
 			public Integer call(Integer integer, Integer integer2) throws Exception {
 				return integer + integer2;
 			}
-		}, Durations.seconds(60), Durations.seconds(30))
-			.print();
+		}, Durations.seconds(60), Durations.seconds(5));
+		peopleCountDStgream.print();
+
+		// 10분동안 전송된 것들을 모아서 뭔가 한다.
+		JavaDStream<TestModel> testModelJavaDStreamBy10m = testDStream.window(Durations.minutes(10), Durations.seconds(10));
+		testModelJavaDStreamBy10m.print();
+
+		// transform : DStream을 RDD로 바꿔주고 가공 후 다시 DStream으로 넘겨준다.
+		/*
+		testDStream.transform(new Function<JavaRDD<TestModel>, JavaRDD<? extends Object>>() {
+			@Override
+			public JavaRDD<? extends Object> call(JavaRDD<TestModel> testModelJavaRDD) throws Exception {
+				return null;
+			}
+		})
+		*/
+
+		// rdd로 반환해주는 액션. 저장 같은 것을 여기서 수행
+		/*
+		testDStream.foreachRDD(new VoidFunction<JavaRDD<TestModel>>() {
+			@Override
+			public void call(JavaRDD<TestModel> testModelJavaRDD) throws Exception {
+
+			}
+		});
+		*/
 
 		jssc.start();
 		jssc.awaitTermination();
