@@ -8,17 +8,37 @@ import java.io.Serializable;
  */
 public class Person implements Serializable {
 
-	private String name;
+	private double height;
+	private double weight;
 	private int age;
+	private double label;
 
 	public Person() {
 
 	}
 
-	public Person(String name, int age) {
+	public Person(double height, double weight, int age, double label) {
 
-		this.name = name;
+		this.height = height;
+		this.weight = weight;
 		this.age = age;
+		this.label = label;
+	}
+
+	public double getHeight() {
+		return height;
+	}
+
+	public void setHeight(double height) {
+		this.height = height;
+	}
+
+	public double getWeight() {
+		return weight;
+	}
+
+	public void setWeight(double weight) {
+		this.weight = weight;
 	}
 
 	public int getAge() {
@@ -29,11 +49,11 @@ public class Person implements Serializable {
 		this.age = age;
 	}
 
-	public String getName() {
-		return name;
+	public double getLabel() {
+		return label;
 	}
 
-	public void setName(String name) {
-		this.name = name;
+	public void setLabel(double label) {
+		this.label = label;
 	}
 }
